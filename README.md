@@ -9,8 +9,13 @@ note yet...
 3. Click `"Load Unpacked Extension..."`
 4. Select folder with this repository.
 
+## Donation for a 🍻
+~~~
+LSK: 15015136092749848942L
+BTC: 15Z2Goc47t4vQvRL22n8x6qC43JgH97VGE
+~~~
+
 ## TODO:
 - Add to the market
 - Add more features/settings
 - Add tests
-
