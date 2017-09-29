@@ -30,18 +30,18 @@ const updateData = value => storage.sync.set({data: value.tickers.LSK});
 
 const receiveData = ({oldValue, newValue}) => {
   storage.sync.get(['select'], ({select}) => {
-    let selected = select || 'USD';
+    let selected = (select && !!newValue[select]) ? select : 'USD';
     if (!oldValue) {
-      updateTicker(newValue[selected], newValue[selected])
+      updateTicker(newValue, newValue, selected);
     } else {
-      updateTicker(newValue[selected], oldValue[selected])
+      updateTicker(newValue, oldValue, selected);
     }
   })
 }
 
 const receiveSelect = selected => {
   storage.sync.get(['data'], ({data}) => {
-    updateTicker(data[selected], data[selected])
+    updateTicker(data, data, selected)
   });
 }
 
@@ -54,12 +54,19 @@ storage.onChanged.addListener(({data, select}) => {
   }
 });
 
-const updateTicker = (newV, oldV) => {
-    const originalValue = newV.toString();
-    const preparedValue = prepareValue(newV);
-    badge.setBadgeText({text: preparedValue});
-    badge.setTitle({title: originalValue })
-    badge.setBadgeBackgroundColor({ color: getColor(oldV, newV)});
+const updateTicker = (newData, oldData, selected) => {
+  let originalValue;
+  let preparedValue;
+  if (selected === 'BTC') {
+    originalValue = (newData[selected] * 1000).toFixed(6).toString();
+    preparedValue = prepareValue(newData[selected] * 1000);
+  } else {
+    originalValue = newData[selected].toFixed(6).toString();
+    preparedValue = prepareValue(newData[selected]);
+  }
+  badge.setBadgeText({text: preparedValue});
+  badge.setTitle({title: originalValue })
+  badge.setBadgeBackgroundColor({ color: getColor(oldData[selected], newData[selected])});
 }
 
 const getData = () =>
