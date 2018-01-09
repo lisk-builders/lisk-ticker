@@ -1,7 +1,10 @@
 const red = "#e85600";
 const green = "#32b643";
 const blue = "#5764c6";
-const API = 'https://explorer.lisk.io/api';
+const availableFeeds = {
+    "lsk": "https://explorer.lisk.io/api/getPriceTicker",
+    "cmc": "https://api.coinmarketcap.com/v1/ticker/lisk/?convert=EUR"
+};
 const MINUTE = 60000;
 let timer;
 
@@ -17,16 +20,26 @@ const prepareValue = value => {
     v = v.toFixed(2);
   }
   return v.toString();
-}
+};
 
 const getColor = (oldV, newV) =>
-  newV > oldV ?
-    green :
-    newV === oldV ?
-      blue :
-      red;
+  newV > oldV ? green : newV === oldV ? blue : red;
 
-const updateData = value => storage.sync.set({data: value.tickers.LSK});
+const updateData = value => {
+  storage.sync.get(["feed"], ({feed}) => {
+    if (feed === "lsk") {
+      return storage.sync.set({data: value.tickers.LSK});
+    }
+
+    let tickers = {};
+    for (let key in value[0]) {
+      if (key.indexOf("price_") > -1) {
+        tickers[key.replace("price_", "").toUpperCase()] = value[0][key];
+      }
+    }
+    return storage.sync.set({data: tickers});
+  });
+};
 
 const receiveData = ({oldValue, newValue}) => {
   storage.sync.get(['select'], ({select}) => {
@@ -36,51 +49,77 @@ const receiveData = ({oldValue, newValue}) => {
     } else {
       updateTicker(newValue, oldValue, selected);
     }
-  })
-}
+  });
+};
 
 const receiveSelect = selected => {
   storage.sync.get(['data'], ({data}) => {
     updateTicker(data, data, selected)
   });
-}
+};
 
-storage.onChanged.addListener(({data, select}) => {
+const receiveFeed = feed => parseFeedData(feed);
+
+storage.onChanged.addListener(({feed, select, data}) => {
   if (data) {
     return receiveData(data);
   }
+
+  if (feed) {
+    return receiveFeed(feed.newValue);
+  }
   if (select) {
-    return receiveSelect(select.newValue)
+    return receiveSelect(select.newValue);
   }
 });
 
 const updateTicker = (newData, oldData, selected) => {
   let originalValue;
   let preparedValue;
-  if (selected === 'BTC') {
-    originalValue = (newData[selected] * 1000).toFixed(6).toString();
+  if (selected === "BTC") {
+    originalValue = (Number(newData[selected]) * 1000).toFixed(6).toString();
     preparedValue = prepareValue(newData[selected] * 1000);
   } else {
-    originalValue = newData[selected].toFixed(6).toString();
+    originalValue = Number(newData[selected])
+      .toFixed(6)
+      .toString();
     preparedValue = prepareValue(newData[selected]);
   }
   badge.setBadgeText({text: preparedValue});
   badge.setTitle({title: originalValue })
   badge.setBadgeBackgroundColor({ color: getColor(oldData[selected], newData[selected])});
-}
+};
 
-const getData = () =>
-  fetch(`${API}/getPriceTicker`)
+const getData = API => {
+  return fetch(API)
     .then(res => res.status === 200 && res.json())
     .then(updateData);
+};
 
 const loop = () => {
   clearTimeout(timer);
   timer = setTimeout(() => {
-    getData();
+    populateFeedData();
     loop();
   }, MINUTE);
 };
 
-getData();
+const populateFeedData = () => {
+  storage.sync.get(["feed"], ({feed}) => parseFeedData(feed));
+};
+
+const parseFeedData = feed => {
+  if (feed) {
+    Object.keys(availableFeeds).forEach(function(item) {
+      if (item === feed) {
+        return getData(availableFeeds[item]);
+      }
+    });
+  } else {
+    storage.sync.set({feed: "lsk"});
+    return getData(availableFeeds.lsk);
+  }
+};
+
+populateFeedData();
 loop();
