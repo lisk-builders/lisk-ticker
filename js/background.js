@@ -109,12 +109,8 @@ const populateFeedData = () => {
 };
 
 const parseFeedData = feed => {
-  if (feed) {
-    Object.keys(availableFeeds).forEach(function(item) {
-      if (item === feed) {
-        return getData(availableFeeds[item]);
-      }
-    });
+  if(availableFeeds.hasOwnProperty(feed)) {
+    return getData(availableFeeds[feed]);
   } else {
     storage.sync.set({feed: "lsk"});
     return getData(availableFeeds.lsk);
