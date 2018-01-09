@@ -1,7 +1,7 @@
 ## A simple Chrome Extension showing current Lisk price ticker.
 
 ## Extension Market
-note yet...
+[Install lisk-ticker](https://chrome.google.com/webstore/detail/lisk-ticker/nddfpgnfeckojmofblmofodikhbplbfd)
 
 ## Usage
 1. Open `chrome://extensions/` with your Chrome Browser.
