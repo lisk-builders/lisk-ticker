@@ -5,6 +5,7 @@ const availableFeeds = {
     "lsk": "https://explorer.lisk.io/api/getPriceTicker",
     "cmc": "https://api.coinmarketcap.com/v1/ticker/lisk/?convert=EUR"
 };
+const walletAPIUrl = "https://explorer.lisk.io/api/getAccount?address=";
 const MINUTE = 60000;
 let timer;
 
@@ -21,6 +22,20 @@ const prepareValue = value => {
   }
   return v.toString();
 };
+
+const updateBalance = addressJSON => {
+  storage.sync.set({balance: addressJSON.balance});
+};
+const checkWallet = wallet => {
+  if(wallet && /\d\L/.test(wallet)) getBalance(wallet);
+};
+const getBalance = wallet => {
+  storage.sync.set({wallet: wallet});
+  return fetch(walletAPIUrl + wallet)
+  .then(res => res.status === 200 && res.json())
+  .then(updateBalance);
+};
+
 
 const getColor = (oldV, newV) =>
   newV > oldV ? green : newV === oldV ? blue : red;
@@ -41,6 +56,7 @@ const updateData = value => {
   });
 };
 
+
 const receiveData = ({oldValue, newValue}) => {
   storage.sync.get(['select'], ({select}) => {
     let selected = (select && !!newValue[select]) ? select : 'USD';
@@ -60,10 +76,16 @@ const receiveSelect = selected => {
 
 const receiveFeed = feed => parseFeedData(feed);
 
-storage.onChanged.addListener(({feed, select, data}) => {
+storage.onChanged.addListener(({feed, select, data, wallet}) => {
   if (data) {
     return receiveData(data);
   }
+
+  if(wallet) {
+    console.log(wallet);
+    return checkWallet(wallet.newValue);
+  }
+
 
   if (feed) {
     return receiveFeed(feed.newValue);
@@ -76,18 +98,21 @@ storage.onChanged.addListener(({feed, select, data}) => {
 const updateTicker = (newData, oldData, selected) => {
   let originalValue;
   let preparedValue;
-  if (selected === "BTC") {
-    originalValue = (Number(newData[selected]) * 1000).toFixed(6).toString();
-    preparedValue = prepareValue(newData[selected] * 1000);
-  } else {
-    originalValue = Number(newData[selected])
+  if(newData) {
+    if (selected === "BTC") {
+      originalValue = (Number(newData[selected]) * 1000).toFixed(6).toString();
+      preparedValue = prepareValue(newData[selected] * 1000);
+    } else {
+      originalValue = Number(newData[selected])
       .toFixed(6)
       .toString();
-    preparedValue = prepareValue(newData[selected]);
+      preparedValue = prepareValue(newData[selected]);
+    }
+    badge.setBadgeText({text: preparedValue});
+    badge.setTitle({title: originalValue })
+    badge.setBadgeBackgroundColor({ color: getColor(oldData[selected], newData[selected])});
   }
-  badge.setBadgeText({text: preparedValue});
-  badge.setTitle({title: originalValue })
-  badge.setBadgeBackgroundColor({ color: getColor(oldData[selected], newData[selected])});
+
 };
 
 const getData = API => {
@@ -105,11 +130,12 @@ const loop = () => {
 };
 
 const populateFeedData = () => {
-  storage.sync.get(["feed"], ({feed}) => parseFeedData(feed));
+  storage.sync.get(["feed", "wallet"], ({feed, wallet}) => parseFeedData(feed) && checkWallet(wallet));
 };
 
 const parseFeedData = feed => {
   if(availableFeeds.hasOwnProperty(feed)) {
+    storage.sync.set({feed: feed});
     return getData(availableFeeds[feed]);
   } else {
     storage.sync.set({feed: "lsk"});

@@ -2,15 +2,24 @@ const {storage} = chrome;
 
 const form = document.querySelector(".js-currencies"),
   feed = document.querySelector(".js-feed"),
+  wallet = document.querySelector('.js-wallet'),
   buttons = document.querySelector(".buttons");
 
 const updateLabel = name => (name === "BTC" ? "mBTC" : name);
 
-const renderCurrencies = ({data, select, feed}) => {
+const renderWallet = (wallet, balance) => {
+  document.querySelector(".js-wallet").value = wallet || "";
+  if(balance) {
+    document.querySelector('.js-balance').style.display = "block";
+    document.querySelector('.js-balance h4').innerText = Number(Number(balance)/100000000).toFixed(3);
+  }
+};
+
+const renderCurrencies = (data, select, feed) => {
   const currencySelected = select || "USD";
   const feedSelected = feed || "lsk";
   buttons.innerHTML = "";
-  Object.keys(data).map(currency => {
+  data &&  Object.keys(data).map(currency => {
     const label = document.createElement("label");
     const html = `<input type="radio" name="currency" ${currency ===
       currencySelected &&
@@ -38,8 +47,19 @@ form.addEventListener("change", event => {
   storage.sync.set({select: event.target.value});
 });
 
-storage.onChanged.addListener(() => {
-  storage.sync.get(["data", "select", "feed"], renderCurrencies);
+wallet.addEventListener("keyup", event => {
+  storage.sync.set({wallet: event.target.value});
 });
 
-storage.sync.get(["data", "select", "feed"], renderCurrencies);
+const fetchAndTriggerUIUpdate = () => {
+  storage.sync.get(["data", "select", "feed", "wallet", "balance"], ({data, select, feed, wallet, balance}) => {
+    renderCurrencies(data, select, feed);
+    renderWallet(wallet, balance);
+  });
+};
+
+storage.onChanged.addListener(() => {
+  fetchAndTriggerUIUpdate();
+});
+
+fetchAndTriggerUIUpdate();
