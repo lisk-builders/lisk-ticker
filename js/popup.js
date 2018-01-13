@@ -1,5 +1,13 @@
 const {storage} = chrome;
 
+const currencyMap = {
+  "GBP": "£",
+  "USD": "$",
+  "EUR": "€",
+  "RUB": "₽",
+  "BTC": "Ƀ"
+};
+
 const form = document.querySelector(".js-currencies"),
   feed = document.querySelector(".js-feed"),
   wallet = document.querySelector('.js-wallet'),
@@ -7,11 +15,19 @@ const form = document.querySelector(".js-currencies"),
 
 const updateLabel = name => (name === "BTC" ? "mBTC" : name);
 
-const renderWallet = (wallet, balance) => {
+const renderWallet = (wallet, balance, data, select) => {
+  const safeSelect = select || "USD";
   document.querySelector(".js-wallet").value = wallet || "";
   if(balance) {
+    let currencyDecimalPoints = 2;
+    if(select === "BTC") {
+      currencyDecimalPoints = 8;
+    }
+    const calculatedBalance = Number(Number(balance)/100000000),
+          calculatedCurrencyBalance = Number(calculatedBalance * Number(data[safeSelect])).toFixed(currencyDecimalPoints);
     document.querySelector('.js-balance').style.display = "block";
-    document.querySelector('.js-balance h4').innerText = Number(Number(balance)/100000000).toFixed(3);
+    document.querySelector('.js-balance h4').innerText = `${calculatedBalance.toFixed(3)} LSK`;
+    document.querySelector('.js-balance p').innerText = `${currencyMap[safeSelect]}${calculatedCurrencyBalance}`;
   }
 };
 
@@ -54,7 +70,7 @@ wallet.addEventListener("keyup", event => {
 const fetchAndTriggerUIUpdate = () => {
   storage.sync.get(["data", "select", "feed", "wallet", "balance"], ({data, select, feed, wallet, balance}) => {
     renderCurrencies(data, select, feed);
-    renderWallet(wallet, balance);
+    renderWallet(wallet, balance, data, select);
   });
 };
 
