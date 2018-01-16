@@ -24,16 +24,40 @@ const prepareValue = value => {
 };
 
 const updateBalance = addressJSON => {
+  storage.sync.set({errors: false});
   storage.sync.set({balance: addressJSON.balance});
 };
 const checkWallet = wallet => {
-  if(wallet && /\d\L/.test(wallet)) getBalance(wallet);
+  wallet = wallet.toUpperCase();
+  if(wallet && /\d\L/.test(wallet)) return getBalance(wallet);
+  const errors = {
+    "wallet": "Wallet address is not valid"
+  };
+
+  storage.sync.set({errors: errors});
 };
+const validateWallet = (res, wallet) => {
+  if(res.success) {
+    storage.sync.set({wallet: wallet});
+    return res;
+  } else {
+    throw new Error(res.error);
+  }
+};
+const processErrors = error => {
+  const errors = {
+    "wallet": error.message
+  };
+
+  storage.sync.set({errors: errors});
+};
+
 const getBalance = wallet => {
-  storage.sync.set({wallet: wallet});
   return fetch(walletAPIUrl + wallet)
   .then(res => res.status === 200 && res.json())
-  .then(updateBalance);
+  .then(res => validateWallet(res, wallet))
+  .then(updateBalance)
+  .catch(processErrors);
 };
 
 
@@ -82,7 +106,6 @@ storage.onChanged.addListener(({feed, select, data, wallet}) => {
   }
 
   if(wallet) {
-    console.log(wallet);
     return checkWallet(wallet.newValue);
   }
 

@@ -15,19 +15,34 @@ const form = document.querySelector(".js-currencies"),
 
 const updateLabel = name => (name === "BTC" ? "mBTC" : name);
 
-const renderWallet = (wallet, balance, data, select) => {
+const renderWallet = (wallet, balance, data, select, errors) => {
   const safeSelect = select || "USD";
-  document.querySelector(".js-wallet").value = wallet || "";
+  document.querySelector(".js-wallet input").value = wallet || "";
   if(balance) {
+    // Remove any errors now we have a balance
+    const errorSpan = document.querySelector('.js-wallet span');
+    errorSpan.innerText = "";
+    errorSpan.style.display = "none";
+
     let currencyDecimalPoints = 2;
     if(select === "BTC") {
       currencyDecimalPoints = 8;
     }
+
+    const numFormat = (num, format) => new Intl.NumberFormat( navigator.language, { maximumFractionDigits: format }, ).format(num);
+
     const calculatedBalance = Number(Number(balance)/100000000),
-          calculatedCurrencyBalance = Number(calculatedBalance * Number(data[safeSelect])).toFixed(currencyDecimalPoints);
+          calculatedCurrencyBalance = numFormat(calculatedBalance * Number(data[safeSelect]), currencyDecimalPoints);
     document.querySelector('.js-balance').style.display = "block";
     document.querySelector('.js-balance h4').innerText = `${calculatedBalance.toFixed(3)} LSK`;
     document.querySelector('.js-balance p').innerText = `${currencyMap[safeSelect]}${calculatedCurrencyBalance}`;
+  }
+  if(errors) {
+    if(errors.hasOwnProperty("wallet")) {
+      const errorSpan = document.querySelector('.js-wallet span');
+      errorSpan.innerText = errors.wallet;
+      errorSpan.style.display = "block";
+    }
   }
 };
 
@@ -68,9 +83,9 @@ wallet.addEventListener("keyup", event => {
 });
 
 const fetchAndTriggerUIUpdate = () => {
-  storage.sync.get(["data", "select", "feed", "wallet", "balance"], ({data, select, feed, wallet, balance}) => {
+  storage.sync.get(["data", "select", "feed", "wallet", "balance", "errors"], ({data, select, feed, wallet, balance, errors}) => {
     renderCurrencies(data, select, feed);
-    renderWallet(wallet, balance, data, select);
+    renderWallet(wallet, balance, data, select, errors);
   });
 };
 
