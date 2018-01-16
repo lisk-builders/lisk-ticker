@@ -132,7 +132,7 @@ const updateTicker = (newData, oldData, selected) => {
       preparedValue = prepareValue(newData[selected]);
     }
     badge.setBadgeText({text: preparedValue});
-    badge.setTitle({title: originalValue })
+    badge.setTitle({title: originalValue });
     badge.setBadgeBackgroundColor({ color: getColor(oldData[selected], newData[selected])});
   }
 
