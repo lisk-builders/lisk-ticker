@@ -28,7 +28,7 @@ const updateBalance = addressJSON => {
   storage.sync.set({balance: addressJSON.balance});
 };
 const checkWallet = wallet => {
-  wallet = wallet.toUpperCase();
+  wallet = String(wallet).toUpperCase();
   if(wallet && /\d\L/.test(wallet)) return getBalance(wallet);
   const errors = {
     "wallet": "Wallet address is not valid"
