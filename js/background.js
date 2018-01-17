@@ -2,7 +2,7 @@ const red = "#e85600";
 const green = "#32b643";
 const blue = "#5764c6";
 const availableFeeds = {
-    "lsk": "https://explorer.lisk.io/api/getPriceTicker",
+    "lsk": "https://explorer.lisk.io/api/getPriceTicker?",
     "cmc": "https://api.coinmarketcap.com/v1/ticker/lisk/?convert=EUR"
 };
 const walletAPIUrl = "https://explorer.lisk.io/api/getAccount?address=";
