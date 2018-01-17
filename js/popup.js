@@ -16,7 +16,7 @@ const form = document.querySelector(".js-currencies"),
 const updateLabel = name => (name === "BTC" ? "mBTC" : name);
 
 const renderWallet = (wallet, balance, data, select, errors) => {
-  const safeSelect = data.hasOwnProperty(select) && select || "USD";
+  const safeSelect = data && data.hasOwnProperty(select) && select || "USD";
   document.querySelector(".js-wallet input").value = wallet || "";
   if(balance) {
     // Remove any errors now we have a balance
@@ -47,7 +47,7 @@ const renderWallet = (wallet, balance, data, select, errors) => {
 };
 
 const renderCurrencies = (data, select, feed) => {
-  const currencySelected = data.hasOwnProperty(select) && select || "USD";
+  const currencySelected = data && data.hasOwnProperty(select) && select || "USD";
   const feedSelected = feed || "lsk";
   buttons.innerHTML = "";
   data &&  Object.keys(data).map(currency => {
