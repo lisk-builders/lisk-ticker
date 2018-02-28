@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Lisk Ticker",
   "description": "A simple Chrome Extension showing current Lisk price ticker.",
-  "version": "0.5",
+  "version": "0.6",
   "browser_action": {
     "default_icon": "icons/128x128.png",
     "default_popup": "popup.html"
